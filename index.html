@@ -1,11 +1,180 @@
+<!DOCTYPE html>
 <html>
-    <head></head>
+    <head>
+        <title>Backbone Tutorial - Pavan Ratnakar</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.3.1/css/bootstrap-combined.min.css" rel="stylesheet">
+    </head>
     <body>
+        <div class="container">
+            <h1>User Management</h1>
+            <div class="page"></div>
+        </div>
+        <script id="user-list" type="text/template">
+            <a href="#/new" class="btn btn-primary">New</a>
+            <table class="table stripped">
+                <thead>
+                    <tr>
+                        <th>Id</th>
+                        <th>Fisrst Name</th>
+                        <th>Last Name</th>
+                        <th>Age</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% _.each(users,function(user,i){ %>
+                        <tr>
+                            <td><%= user.get('id') %></td>
+                            <td><%= user.get('firstname') %></td>
+                            <td><%= user.get('lastname') %></td>
+                            <td><%= user.get('age') %></td>
+                            <td><a href="#/edit/<%= user.get('id')%>" class="btn">Edit</a></td>
+                        </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        </script>
+        <script id="add-user" type="text/template">
+            <form class="add-user-form">
+                <legend>Add User</legend>
+                <label>First Name</label>
+                <input type="text" name="firstname" value="<%= user && user.get('firstname') %>" />
+                <label>Last Name</label>
+                <input tpye="text" name="lastname" value="<%= user && user.get('lastname') %>" />
+                <label>Age</label>
+                <input type="text" name="age" value="<%= user && user.get('age') %>" />
+                <hr />
+                <button type="submit" class="btn">Create User</button>
+                <% if (user) { %>
+                <input type="hidden" name="id" value="<%= user && user.get('id') %>" />
+                <button type="button" class="btn btn-danger delete">Delete</button>
+                <% } %>
+            </form>
+        </script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.0.2/jquery.min.js"></script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.4.4/underscore-min.js"></script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/backbone.js/1.0.0/backbone-min.js" type="text/javascript"></script>
+        <script type="text/javascript">
+            $.ajaxPrefilter(function(options, originalOptions, jqXHR){
+                options.url = 'http://backbonejs-beginner.herokuapp.com' + options.url;
+            });
+            $.fn.serializeObject = function(){
+               var o = {};
+               var a = this.serializeArray();
+               $.each(a, function() {
+                   if (o[this.name]) {
+                       if (!o[this.name].push) {
+                           o[this.name] = [o[this.name]];
+                       }
+                       o[this.name].push(this.value || '');
+                   } else {
+                       o[this.name] = this.value || '';
+                   }
+               });
+               return o;
+            };
+            // COLLECTION
+            var Users = Backbone.Collection.extend({
+                url: '/users'
+            });
+            // MODELS
+            var User = Backbone.Model.extend({
+                urlRoot: '/users'
+            });
+            // START OF USER LIST VIEW
+            var UserList = Backbone.View.extend({
+                el: '.page',
+                template: _.template($('#user-list').html()),
+                render: function(){
+                    var t = this,
+                        users = new Users();
+                    users.fetch({
+                        success: function(users){
+                            t.$el.html(t.template({users: users.models}));
+                        }
+                    });
+                }
+            });
+            // END OF USER LIST VIEW
+            // START OF ADD USER VIEW
+            var AddUser = Backbone.View.extend({
+                user: null,
+                el: '.page',
+                events: {
+                    'submit .add-user-form': 'saveUser',
+                    'click .delete': 'deleteUser'
+                },
+                render: function(options){
+                    var t = this;
 
+                    if (options.id) {
+                        var user = new User({
+                            id: options.id
+                        });
+                        user.fetch({
+                            success: function(user){
+                                t.$el.html(_.template($('#add-user').html(),{
+                                    user : user
+                                }));
+                            }
+                        });
+                    } else {
+                        t.$el.html(_.template($('#add-user').html(),{
+                            user: null
+                        }));
+                    }
+                },
+                saveUser: function(e){
+                    e.preventDefault();
+                    var userDetails = $(e.currentTarget).serializeObject();
+                    this.user = new User();
+                    this.user.save(userDetails, {
+                        'success': function(user){
+                            console.log(user.toJSON());
+                            router.navigate('',{
+                                trigger: true
+                            });
+                        }
+                    });
+                    return false;
+                },
+                deleteUser: function(e){
+                    e.preventDefault();
+                    this.user.destroy({
+                        'success' : function(){
+                            router.navigate('',{
+                                trigger: true
+                            });
+                        }
+                    });
+                    return false;
+                }
+            });
+            // END OF ADD USER VIEW
+            // ROUTER
+            var Router = Backbone.Router.extend({
+                routes: {
+                    '': 'home',
+                    'new': 'addUser',
+                    'edit/:id': 'addUser' 
+                }
+            });
 
-        <script src="js/underscore-min.js" type="text/javascript"></script>
-        <script src="js/jquery-1.10.0.min.js" type="text/javascript"></script>
-        <script src="js/backbone-min.js" type="text/javascript"></script>
-        <script src="js/main.js" type="text/javascript"></script>
+            var userList = new UserList();
+            var addUser = new AddUser();
+            var router = new Router();
+            router.on({
+                'route:home': function(){
+                    userList.render();
+                },
+                'route:addUser': function(id){
+                    addUser.render({
+                        id : id
+                    });
+                }
+            });
+            Backbone.history.start();
+        </script>
     </body>
 </html>

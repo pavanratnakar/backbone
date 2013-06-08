@@ -1,0 +1,34 @@
+{
+    "name":         "Backbone-Tutorial",
+    "version":      "0.0.1",
+    "description":  "",
+    "author":       "",
+    "homepage":     "",
+    "bugs": { 
+        "url" : "" 
+    },
+    "contributors":[
+        {"name": "Pavan Ratnakar"}
+    ],
+    "os": ["darwin", "linux", "win32"], 
+    "engines": {
+        "node": "*"
+    },
+    "main": "",
+    "bin": {
+
+    },
+    "scripts": {
+
+    },
+
+    "dependencies": {
+        "express": "*"
+    },
+    "keywords": "",
+    "license": "",
+    "repository": {
+        "type": "",
+        "url": ""
+    }
+}
